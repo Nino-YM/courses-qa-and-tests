@@ -29,6 +29,7 @@ describe("User Service", () => {
     expect(user.birthday).toBeDefined();
     expect(user.birthday.getFullYear()).toBe(1997);
     expect(user.birthday.getMonth()).toBe(8);
+    expect(user.birthday.getDate()).toBe(13);
 
     expect(userRepository.createUserInRepository).toBeCalledTimes(1);
     expect(userRepository.createUserInRepository).toBeCalledWith({
@@ -42,7 +43,7 @@ describe("User Service", () => {
       await createUser({
         name: "Valentin R",
       });
-      throw new Error("createUser should trigger an error.");
+      assert.fail("createUser should trigger an error.");
     } catch (e) {
       expect(e.name).toBe("HttpBadRequest");
       expect(e.statusCode).toBe(400);
