@@ -16,7 +16,7 @@ export async function createUser(data) {
   if (result.success) {
     const age = calculateAge(result.data.birthday);
 
-    if (age > MIN_USER_AGE) {
+    if (age < MIN_USER_AGE) {
       throw new HttpForbidden("User is too young.");
     }
     return createUserInRepository(result.data);
