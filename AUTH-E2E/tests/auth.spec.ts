@@ -46,4 +46,31 @@ test.describe("Signup flow", () => {
     await expect(page.getByLabel("E-mail")).toHaveValue("");
     await expect(page.getByLabel("Mot de passe")).toHaveValue("");
   });
+
+  test("should show only email error when email is invalid", async ({ page }) => {
+    await page.getByLabel("Nom d'utilisateur").fill("bob");
+    await page.getByLabel("E-mail").fill("bad-email");
+    await page.getByLabel("Mot de passe").fill("secret123");
+
+    await page.getByRole("button", { name: "Créer mon compte" }).click();
+
+    await expect(page.getByText("Veuillez saisir un e-mail valide.")).toBeVisible();
+    await expect(page.locator('[data-error-for="username"]')).toHaveText("");
+    await expect(page.locator('[data-error-for="password"]')).toHaveText("");
+    await expect(page.getByText("Votre compte a été créé avec succès")).toBeHidden();
+  });
+
+  test("should show error when not all fields are filled (password missing)", async ({ page }) => {
+    await page.getByLabel("Nom d'utilisateur").fill("alice");
+    await page.getByLabel("E-mail").fill("alice@example.com");
+    await page.getByRole("button", { name: "Créer mon compte" }).click();
+
+    await expect(
+      page.getByText("Le mot de passe doit comporter au moins 6 caractères.")
+    ).toBeVisible();
+
+    await expect(page.locator('[data-error-for="username"]')).toHaveText("");
+    await expect(page.locator('[data-error-for="email"]')).toHaveText("");
+    await expect(page.getByText("Votre compte a été créé avec succès")).toBeHidden();
+  });
 });
