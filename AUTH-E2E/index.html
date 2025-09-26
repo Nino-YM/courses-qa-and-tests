@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Sign up</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body { font-family: system-ui, sans-serif; margin: 2rem; }
+      form { display: grid; gap: 0.75rem; max-width: 380px; }
+      label { font-weight: 600; }
+      input { padding: 0.5rem; font-size: 1rem; }
+      button { padding: 0.6rem 1rem; font-size: 1rem; cursor: pointer; }
+      .error { color: #b00020; margin-top: 0.25rem; font-size: 0.9rem; }
+      .success { margin-top: 1rem; color: #0a7a2f; font-weight: 600; }
+      .field { display: grid; gap: 0.25rem; }
+    </style>
+  </head>
+  <body>
+    <h1>Créer un compte</h1>
+
+    <form id="signup-form" novalidate>
+      <div class="field">
+        <label for="username">Nom d'utilisateur</label>
+        <input id="username" name="username" type="text" autocomplete="username" required minlength="2" />
+        <div class="error" data-error-for="username"></div>
+      </div>
+
+      <div class="field">
+        <label for="email">E-mail</label>
+        <input id="email" name="email" type="email" autocomplete="email" required />
+        <div class="error" data-error-for="email"></div>
+      </div>
+
+      <div class="field">
+        <label for="password">Mot de passe</label>
+        <input id="password" name="password" type="password" autocomplete="new-password" required minlength="6" />
+        <div class="error" data-error-for="password"></div>
+      </div>
+
+      <button type="submit" id="submit-btn">Créer mon compte</button>
+    </form>
+
+    <p id="success" class="success" hidden>Votre compte a été créé avec succès</p>
+
+    <script type="module" src="/main.js"></script>
+  </body>
+</html>
