@@ -5,10 +5,12 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "test": "vitest"
+    "test": "vitest",
+    "test:cov": "vitest run --coverage"
   },
   "devDependencies": {
     "@httpx/exception": "^3.0.5",
+    "@vitest/coverage-v8": "1.6.1",
     "vite": "^5.2.0",
     "vitest": "^1.6.1",
     "zod": "^3.22.4"

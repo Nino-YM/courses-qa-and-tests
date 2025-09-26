@@ -43,13 +43,14 @@ describe("Banking / Account Service", () => {
     expect(account.userId).toBe(1);
     expect(account.amount).toBe(250.75);
 
-    expect(accountRepository.createAccountInRepository).toBeCalledTimes(1);
-    expect(accountRepository.createAccountInRepository).toBeCalledWith(input);
+    expect(accountRepository.createAccountInRepository).toHaveBeenCalledTimes(1);
+    expect(accountRepository.createAccountInRepository).toHaveBeenCalledWith(input);
   });
 
   it("should trigger a bad request error on createAccount with wrong params", async () => {
     try {
       await createAccount({
+        // userId manquant
         amount: 100,
       });
       assert.fail("createAccount should trigger an error.");
@@ -74,16 +75,16 @@ describe("Banking / Account Service", () => {
       expect(typeof acc.amount).toBe("number");
     }
 
-    expect(accountRepository.getAccountsByUserIdInRepository).toBeCalledTimes(1);
-    expect(accountRepository.getAccountsByUserIdInRepository).toBeCalledWith(userId);
+    expect(accountRepository.getAccountsByUserIdInRepository).toHaveBeenCalledTimes(1);
+    expect(accountRepository.getAccountsByUserIdInRepository).toHaveBeenCalledWith(userId);
   });
 
   it("should deleteAccount successfully", async () => {
     const ok = await deleteAccount({ userId: 1, accountId: 100 });
 
     expect(ok).toBe(true);
-    expect(accountRepository.deleteAccountInRepository).toBeCalledTimes(1);
-    expect(accountRepository.deleteAccountInRepository).toBeCalledWith({ userId: 1, accountId: 100 });
+    expect(accountRepository.deleteAccountInRepository).toHaveBeenCalledTimes(1);
+    expect(accountRepository.deleteAccountInRepository).toHaveBeenCalledWith({ userId: 1, accountId: 100 });
   });
 
   it("should fail deleteAccount with wrong account id", async () => {
@@ -96,4 +97,23 @@ describe("Banking / Account Service", () => {
       expect(accountRepository.deleteAccountInRepository).toHaveBeenCalledTimes(1);
     }
   });
+  it("should trigger a bad request on getAccounts with invalid userId", async () => {
+    try {
+        await getAccounts(0); // userId non positif
+        assert.fail("getAccounts should trigger an error.");
+    } catch (e) {
+        expect(e.name).toBe("HttpBadRequest");
+        expect(e.statusCode).toBe(400);
+    }
+    });
+
+    it("should trigger a bad request on deleteAccount with invalid params", async () => {
+    try {
+        await deleteAccount({ userId: -1, accountId: 0 }); // invalides
+        assert.fail("deleteAccount should trigger an error.");
+    } catch (e) {
+        expect(e.name).toBe("HttpBadRequest");
+        expect(e.statusCode).toBe(400);
+    }
+    });
 });

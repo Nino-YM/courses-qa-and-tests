@@ -46,8 +46,8 @@ describe("Banking / Transfer Service", () => {
     expect(transfer.id).toBeDefined();
     expect(transfer.amount).toBe(100);
 
-    expect(accountRepository.getAccountByIdInRepository).toBeCalledTimes(2);
-    expect(accountRepository.patchAccountInRepository).toBeCalledTimes(2);
+    expect(accountRepository.getAccountByIdInRepository).toHaveBeenCalledTimes(2);
+    expect(accountRepository.patchAccountInRepository).toHaveBeenCalledTimes(2);
     expect(accountRepository.patchAccountInRepository).toHaveBeenCalledWith({
       accountId: 10,
       amount: 150,
@@ -57,13 +57,14 @@ describe("Banking / Transfer Service", () => {
       amount: 150,
     });
 
-    expect(transferRepository.createTransferInRepository).toBeCalledTimes(1);
-    expect(transferRepository.createTransferInRepository).toBeCalledWith(input);
+    expect(transferRepository.createTransferInRepository).toHaveBeenCalledTimes(1);
+    expect(transferRepository.createTransferInRepository).toHaveBeenCalledWith(input);
   });
 
   it("should trigger bad request on createTransfer with wrong params", async () => {
     try {
       await createTransfer({
+        // amount manquant
         sourceAccountId: 10,
         destAccountId: 11,
       });
@@ -116,4 +117,54 @@ describe("Banking / Transfer Service", () => {
     expect(transferRepository.getTransfersByUserIdInRepository).toHaveBeenCalledTimes(1);
     expect(transferRepository.getTransfersByUserIdInRepository).toHaveBeenCalledWith(userId);
   });
+  it("should trigger bad request when source and destination accounts are the same", async () => {
+    try {
+        await createTransfer({ sourceAccountId: 10, destAccountId: 10, amount: 50 });
+        assert.fail("createTransfer should trigger an error.");
+    } catch (e) {
+        expect(e.name).toBe("HttpBadRequest");
+        expect(e.statusCode).toBe(400);
+    }
+    });
+
+    it("should fail when destination account does not exist", async () => {
+    accountRepository.getAccountByIdInRepository
+        .mockReturnValueOnce({ id: 10, userId: 1, amount: 250 })
+        .mockReturnValueOnce(null);
+
+    try {
+        await createTransfer({ sourceAccountId: 10, destAccountId: 99, amount: 10 });
+        assert.fail("createTransfer should trigger an error.");
+    } catch (e) {
+        expect(e.name).toBe("HttpNotFound");
+        expect(e.statusCode).toBe(404);
+    }
+    });
+
+    it("should trigger bad request on getTransfers with invalid userId", async () => {
+    try {
+        await getTransfers(0);
+        assert.fail("getTransfers should trigger an error.");
+    } catch (e) {
+        expect(e.name).toBe("HttpBadRequest");
+        expect(e.statusCode).toBe(400);
+    }
+    });
+    
+    it("should fail when source account does not exist", async () => {
+    accountRepository.getAccountByIdInRepository
+        .mockReturnValueOnce(null)
+        .mockReturnValueOnce({ id: 11, userId: 2, amount: 50 });
+
+    try {
+        await createTransfer({ sourceAccountId: 99, destAccountId: 11, amount: 10 });
+        assert.fail("createTransfer should trigger an error.");
+    } catch (e) {
+        expect(e.name).toBe("HttpNotFound");
+        expect(e.statusCode).toBe(404);
+        expect(transferRepository.createTransferInRepository).not.toHaveBeenCalled();
+        expect(accountRepository.patchAccountInRepository).not.toHaveBeenCalled();
+    }
+    });
+
 });
