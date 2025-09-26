@@ -1,15 +1,8 @@
-import { Pool } from "pg";
 import { HttpNotFound } from "@httpx/exception";
+import sql from "../../../infrastructure/db.js";
 
-const pool = new Pool({
-  host: process.env.DB_HOST || "localhost",
-  port: Number(process.env.DB_PORT || 5432),
-  user: process.env.DB_USER || "user",
-  password: process.env.DB_PASSWORD || "password",
-  database: process.env.DB_NAME || "mydb",
-});
-
-function normalizeAccount(row) {
+function mapAccountRow(row) {
+  if (!row) return null;
   return {
     id: row.id,
     userId: row.userid,
@@ -17,40 +10,62 @@ function normalizeAccount(row) {
   };
 }
 
-export async function createAccountInRepository(data) {
-  const q = `
+export async function createAccountInRepository({ userId, amount }) {
+  const rows = await sql`
     INSERT INTO accounts (userid, amount)
-    VALUES ($1, $2)
+    VALUES (${userId}, ${amount})
     RETURNING id, userid, amount
   `;
-  const values = [data.userId, data.amount];
-  const { rows } = await pool.query(q, values);
-  return normalizeAccount(rows[0]);
+  return mapAccountRow(rows[0]);
 }
 
 export async function getAccountsByUserIdInRepository(userId) {
-  const q = `
+  const rows = await sql`
     SELECT id, userid, amount
     FROM accounts
-    WHERE userid = $1
+    WHERE userid = ${userId}
     ORDER BY id ASC
   `;
-  const { rows } = await pool.query(q, [userId]);
-  return rows.map(normalizeAccount);
+  return rows.map(mapAccountRow);
 }
 
 export async function deleteAccountInRepository({ userId, accountId }) {
-  const q = `
+  const rows = await sql`
     DELETE FROM accounts
-    WHERE id = $1 AND userid = $2
+    WHERE id = ${accountId} AND userid = ${userId}
+    RETURNING id
   `;
-  const res = await pool.query(q, [accountId, userId]);
-
-  if (res.rowCount === 0) {
+  if (rows.length === 0) {
     const err = new Error("Account not found");
     err.name = "HttpNotFound";
     err.statusCode = 404;
     throw err;
   }
   return true;
+}
+
+export async function getAccountByIdInRepository(accountId) {
+  const rows = await sql`
+    SELECT id, userid, amount
+    FROM accounts
+    WHERE id = ${accountId}
+    LIMIT 1
+  `;
+  return mapAccountRow(rows[0]);
+}
+
+export async function patchAccountInRepository({ accountId, amount }) {
+  const rows = await sql`
+    UPDATE accounts
+       SET amount = ${amount}
+     WHERE id = ${accountId}
+    RETURNING id, userid, amount
+  `;
+  if (rows.length === 0) {
+    const err = new Error("Account not found");
+    err.name = "HttpNotFound";
+    err.statusCode = 404;
+    throw err;
+  }
+  return mapAccountRow(rows[0]);
 }
