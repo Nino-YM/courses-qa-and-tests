@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { createUser } from "./user.service";
+import { createUser, MIN_USER_AGE } from "./user.service";
 import * as userRepository from "./user.repository";
+import assert from "assert";
 
 vi.mock("./user.repository", async (importOriginal) => ({
   ...(await importOriginal()),
@@ -47,6 +48,26 @@ describe("User Service", () => {
     } catch (e) {
       expect(e.name).toBe("HttpBadRequest");
       expect(e.statusCode).toBe(400);
+    }
+  });
+
+  it("should trigger a forbidden error when user is too young", async () => {
+    try {
+      const today = new Date();
+      const tooYoungBirthday = new Date(
+        today.getFullYear() - (MIN_USER_AGE - 1),
+        today.getMonth(),
+        today.getDate()
+      );
+
+      await createUser({
+        name: "Jeunot",
+        birthday: tooYoungBirthday,
+      });
+      assert.fail("createUser should trigger an error.");
+    } catch (e) {
+      expect(e.name).toBe("HttpForbidden");
+      expect(e.statusCode).toBe(403);
     }
   });
 });
